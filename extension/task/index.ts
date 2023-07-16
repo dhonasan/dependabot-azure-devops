@@ -104,6 +104,11 @@ async function run() {
         dockerRunner.arg(["-e", `DEPENDABOT_ALLOW_CONDITIONS=${allow}`]);
       }
 
+      // Set the group updates for certain dependencies
+      if (update.groups) {
+        dockerRunner.arg(["-e", `DEPENDABOT_GROUPS=${update.groups}`]);
+      }
+
       // Set the requirements that should not be unlocked
       if (variables.excludeRequirementsToUnlock) {
         dockerRunner.arg(["-e", `DEPENDABOT_EXCLUDE_REQUIREMENTS_TO_UNLOCK=${variables.excludeRequirementsToUnlock}`]);

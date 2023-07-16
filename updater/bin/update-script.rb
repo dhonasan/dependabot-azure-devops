@@ -18,6 +18,7 @@ require "dependabot/file_updaters"
 require "dependabot/pull_request_creator"
 require "dependabot/pull_request_updater"
 require "dependabot/config/file_fetcher"
+require "dependabot/dependency_group"
 
 require "dependabot/bundler"
 require "dependabot/cargo"
@@ -50,6 +51,7 @@ $options = {
   branch: ENV["DEPENDABOT_TARGET_BRANCH"] || nil, # Branch against which to create PRs
 
   allow_conditions: [],
+  groups: [],
   reject_external_code: ENV["DEPENDABOT_REJECT_EXTERNAL_CODE"] == "true",
   requirements_update_strategy: nil,
   security_advisories: [],
@@ -223,6 +225,15 @@ def allow_conditions_for(dep)
   # Find where the name matches then get the type e.g. production, direct, etc
   found = $options[:allow_conditions].find { |al| dep.name.match?(al["dependency-name"]) }
   found ? found["dependency-type"] : nil
+end
+
+#################################################################
+#                         Setup Groups                          #
+# DEPENDABOT_GROUPS Example:
+# [{"dependencies": {"patterns": ["rubocop", "rspec*", "*"], "exclude-patterns": ["gc_ruboconfig", "gocardless-*"]}}]
+#################################################################
+unless ENV["DEPENDABOT_GROUPS"].to_s.strip.empty?
+  $options[:groups] = JSON.parse(ENV.fetch("DEPENDABOT_GROUPS", nil))
 end
 
 #################################################################
@@ -694,7 +705,8 @@ dependencies.select(&:top_level?).each do |dep|
       # pr_message_header: ,
       # pr_message_footer: ,
       # vulnerabilities_fixed: ,
-      github_redirection_service: Dependabot::PullRequestCreator::DEFAULT_GITHUB_REDIRECTION_SERVICE
+      github_redirection_service: Dependabot::PullRequestCreator::DEFAULT_GITHUB_REDIRECTION_SERVICE,
+      dependency_group: $options[:groups]
     )
 
     # Skip creating/updating PR
@@ -837,7 +849,8 @@ dependencies.select(&:top_level?).each do |dep|
         provider_metadata: {
           work_item: $options[:milestone]
         },
-        message: msg
+        message: msg,
+        dependency_group: $options[:groups]
       )
 
       puts "Submitting #{dep.name} pull request for creation."

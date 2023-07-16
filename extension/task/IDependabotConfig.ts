@@ -34,6 +34,10 @@ export interface IDependabotUpdate {
    */
   allow?: string;
   /**
+   * Group updates for certain dependencies.
+   */
+  groups?: string;
+  /**
    * Custom labels/tags.
    */
   labels?: string;
